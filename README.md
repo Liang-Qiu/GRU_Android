@@ -1,11 +1,11 @@
-# TensorFlow Android Camera Demo
+# TensorFlow Android Word Prediction Demo
 
-This folder contains a simple camera-based demo application utilizing TensorFlow.
+This folder contains a simple word prediction demo application utilizing TensorFlow.
 
 ## Description
 
-This demo uses a Google Inception model to classify camera frames in real-time,
-displaying the top results in an overlay on the camera image.
+This demo uses a 2-layer GRU model to predict words according to the text history cognitinized by
+the Google voice recognition service in real-time, displaying the top results in the main acticity.
 
 ## To build/install/run
 
@@ -19,6 +19,8 @@ installed on your system.
 3. The Android SDK and build tools may be obtained from:
         https://developer.android.com/tools/revisions/build-tools.html
 
+Copy this folder and paste it under the route tensorflow/tensorflow/examples/. 
+
 The Android entries in [`<workspace_root>/WORKSPACE`](../../../WORKSPACE#L2-L13) must be
 uncommented with the paths filled in appropriately depending on where you
 installed the NDK and SDK. Otherwise an error such as:
@@ -29,20 +31,14 @@ The TensorFlow `GraphDef` that contains the model definition and weights
 is not packaged in the repo because of its size. Instead, you must
 first download the file to the `assets` directory in the source tree:
 
-```bash
-$ curl -L https://storage.googleapis.com/download.tensorflow.org/models/inception5h.zip -o /tmp/inception5h.zip
-
-$ unzip /tmp/inception5h.zip -d tensorflow/examples/android/assets/
-```
-
-The labels file describing the possible classification will also be in the
+The vocab file describing the possible prediction will also be in the
 assets directory.
 
 Then, after editing your WORKSPACE file, you must build the APK. Run this from
 your workspace root:
 
 ```bash
-$ bazel build //tensorflow/examples/android:tensorflow_demo
+$ bazel build //tensorflow/examples/android:liangqiu_predictor
 ```
 
 If you get build errors about protocol buffers, run
@@ -53,7 +49,7 @@ use the following command from your workspace root to install the APK once
 built:
 
 ```bash
-$ adb install -r -g bazel-bin/tensorflow/examples/android/tensorflow_demo.apk
+$ adb install -r -g bazel-bin/tensorflow/examples/android/liangqiu_predictor.apk
 ```
 
 Some older versions of adb might complain about the -g option (returning:
@@ -66,15 +62,15 @@ Alternatively, a streamlined means of building, installing and running in one
 command is:
 
 ```bash
-$ bazel mobile-install //tensorflow/examples/android:tensorflow_demo --start_app
+$ bazel mobile-install //tensorflow/examples/android:liangqiu_predicor --start_app
 ```
 
-If camera permission errors are encountered (possible on Android Marshmallow or
+If voice record permission errors are encountered (possible on Android Marshmallow or
 above), then the `adb install` command above should be used instead, as it
-automatically grants the required camera permissions with `-g`. The permission
+automatically grants the required voice record permissions with `-g`. The permission
 errors may not be obvious if the app halts immediately, so if you installed
 with bazel and the app doesn't come up, then the easiest thing to do is try
 installing with adb.
 
-Once the app is installed it will be named "TensorFlow Demo" and have the orange
+Once the app is installed it will be named "Word Predictor" and have the orange
 TensorFlow logo as its icon.
