@@ -22,6 +22,7 @@ import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.View;
+import android.util.Log;
 
 import java.util.List;
 
@@ -34,6 +35,7 @@ public class PredictionScoreView extends View implements ResultsView {
   private final float textSizePx;
   private final Paint fgPaint;
   private final Paint bgPaint;
+  private static final String TAG = "TensorFlowWordPredictor";
 
   public PredictionScoreView(final Context context, final AttributeSet set) {
     super(context, set);
@@ -51,6 +53,7 @@ public class PredictionScoreView extends View implements ResultsView {
   public void setResults(final List<Prediction> results) {
     this.results = results;
     postInvalidate(); // refresh UI
+    Log.e(TAG, "set results!");
   }
 
   @Override
@@ -66,5 +69,6 @@ public class PredictionScoreView extends View implements ResultsView {
         y += fgPaint.getTextSize() * 1.5f;
       }
     }
+    Log.e(TAG, "Drawed the view!");
   }
 }

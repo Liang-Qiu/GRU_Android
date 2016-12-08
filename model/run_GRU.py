@@ -106,26 +106,42 @@ def run_validation(session, model):
 def run_test(session, model, id_to_word=None, test_data=None):
   # test the model on the given data.
   start_time = time.time()
-  costs = 0.0
-  iters = 0
+#  costs = 0.0
+#  iters = 0
 
   fetches = {
       "result": model.result,
-      "cost": model.cost
+#      "cost": model.cost
   }
-     
+  test_feed = np.array([[1,3,3,4,5,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]], dtype=np.int32)		
+  print(test_feed.shape[0])
+  print(test_feed.shape[1])
+  print(test_feed.dtype)
+  test_dict = {
+      model.input.input_data: test_feed
+  }   
 #  for step in range(model.input.epoch_size):
-  vals = session.run(fetches)
-  cost = vals["cost"]
+  print("input_data")
+  print(session.run(model.input.input_data, feed_dict = test_dict))
+#  print("data_len")
+#  print(session.run(model.input.data_len, feed_dict = test_dict))
+  print("inputs")
+  print(session.run(model.inputs, feed_dict = test_dict))
+  print("output")
+  print(session.run(model.output, feed_dict = test_dict))
+  vals = session.run(fetches, feed_dict=test_dict)
+#  cost = vals["cost"]
   result = vals["result"]
 
-  costs += cost
-  iters += model.input.num_steps
+#  costs += cost
+#  iters += model.input.num_steps
 	      
-  print("data_length: %s perplexity: %.3f speed: %.0f wps" % (len(test_data), np.exp(costs / iters), iters * model.input.batch_size / (time.time() - start_time)))
+#  print("data_length: %s perplexity: %.3f speed: %.0f wps" % (len(test_data), np.exp(costs / iters), iters * model.input.batch_size / (time.time() - start_time)))
+  
+  print("%.8f" %(result[0, np.argmax(result)]))
   print(result)
   print("predicted word: %s" % (id_to_word[np.argmax(result)]))		   
-  return np.exp(costs / iters)
+#  return np.exp(costs / iters)
 
 def main(_):
   if not FLAGS.data_path:
@@ -143,8 +159,9 @@ def main(_):
  # checkpoint_state_name = "checkpoint_state"
  # input_graph_name = "input_graph.pb"
  # output_graph_name = "output_graph.pb"
-  
-  with tf.Graph().as_default():
+
+  g1 = tf.Graph()
+  with g1.as_default():
     initializer = tf.random_uniform_initializer(-config.init_scale,
                                                 config.init_scale)
     with tf.name_scope("Train"):
@@ -162,8 +179,10 @@ def main(_):
       with tf.variable_scope("Model", reuse = True, initializer=initializer):
         mtest = GRU.Model(is_training=False, is_testing=True, config=eval_config, input_=test_input)
 
+
     sv = tf.train.Supervisor(logdir=FLAGS.save_path)
     with sv.managed_session() as session:
+#    with tf.Session() as session:
       for i in range(config.max_max_epoch):
         lr_decay = config.lr_decay ** max(i + 1 - config.max_epoch, 0.0)
 	mtrain.assign_lr(session, config.learning_rate * lr_decay)
@@ -175,8 +194,8 @@ def main(_):
 	valid_perplexity = run_validation(session,mvalid)
         print("Epoch: %d Valid Perplexity: %.3f" % (i + 1, valid_perplexity))
 
-      test_perplexity = run_test(session, mtest, id_to_word=id_to_word, test_data=test_data)
-      print("Test Perplexity: %.3f" % test_perplexity)
+      run_test(session, mtest, id_to_word=id_to_word, test_data=test_data)
+#      print("Test Perplexity: %.3f" % test_perplexity)
       
 
       # for FPGA use
@@ -249,6 +268,14 @@ def main(_):
         gru_graph = convert_variables_to_constants(session, session.graph_def, ["Test/Model/result"])
 	tf.train.write_graph(gru_graph, FLAGS.save_path, 'gru_graph.pb', as_text=False)
 	tf.train.write_graph(gru_graph, FLAGS.save_path, "gru_graph.pbtxt", as_text=True)
+        print("write gru_graph")
+
+#  g2 = tf.Graph()
+#  gru_input = {"Test/TestInput/raw_data": tf.placeholder(tf.int32, shape=20)}
+#  with g2.as_default():
+#    with tf.Session(graph=g2) as session:
+#      tf.import_graph_def(tmp_graph, return_elements=["Test/Model/result"], name="")
+#      tf.train.write_graph(session.graph_def, FLAGS.save_path, 'gru_graph.pbtxt', as_text=True)
 
 if __name__ == "__main__":
   tf.app.run()

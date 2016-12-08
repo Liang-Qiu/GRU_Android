@@ -30,6 +30,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Vector;
+import java.util.HashMap;
 
 import org.tensorflow.contrib.android.TensorFlowInferenceInterface;
 
@@ -51,10 +52,11 @@ public class TensorFlowWordPredictor implements Predictor {
   // Config values.
   private String inputName;
   private String outputName;
-  private int inputSize;
+  private int input_max_Size;
 
   // Pre-allocated buffers.
-  private Vector<String> vocab = new Vector<String>();
+  private Vector<String> id_to_word = new Vector<String>();
+  private HashMap<String, Integer> word_to_id = new HashMap<String, Integer>();
   private int[] intValues;   // a serial of word ids
   private float[] outputs;   // confidence corresponding to vocab
   private String[] outputNames; // names of output nodes
@@ -79,7 +81,7 @@ public class TensorFlowWordPredictor implements Predictor {
       String modelFilename,
       String vocabFilename,
       int numClasses,
-      int inputSize,
+      int input_max_Size,
       String inputName,
       String outputName) throws IOException {
     this.inputName = inputName;
@@ -92,17 +94,20 @@ public class TensorFlowWordPredictor implements Predictor {
     BufferedReader br = null;
     br = new BufferedReader(new InputStreamReader(assetManager.open(actualFilename)));
     String line;
+    int index = 0;
     while ((line = br.readLine()) != null) {
-      vocab.add(line);
+      id_to_word.add(line);
+      word_to_id.put(line, index);
+      index++;
     }
     br.close();
-    Log.e(TAG, "Read " + vocab.size() + ", " + numClasses + " specified");
+    Log.e(TAG, "Read " + id_to_word.size() + ", " + numClasses + " specified");
 
-    this.inputSize = inputSize;
+    this.input_max_Size = input_max_Size;
 
     //TODO Pre-allocate buffers. this.intValues?
     outputNames = new String[] {outputName};
-    intValues = new int[inputSize];
+    intValues = new int[input_max_Size];
     outputs = new float[numClasses];
 
     inferenceInterface = new TensorFlowInferenceInterface();
@@ -116,17 +121,30 @@ public class TensorFlowWordPredictor implements Predictor {
     Trace.beginSection("predictWord");
 
     Trace.beginSection("preprocessText");
+    Log.e(TAG, "inut_string:" + string);
     //TODO 将string转化为int[numsteps] !!!!!!
-
-    for (int i = 0; i < intValues.length; ++i) {
-      intValues[i] = 1;
+    String[] input_words = string.split(" ");
+    //intValues = new int[input_words.length];
+    if (input_words.length < input_max_Size) {
+      for (int i = 0; i < input_words.length; ++i) {
+        Log.e(TAG, "input_word: " + input_words[i]);
+        if (word_to_id.containsKey(input_words[i])) intValues[i] = word_to_id.get(input_words[i]);
+        else intValues[i] = 1; //rare words, <unk> in the vocab
+        Log.e(TAG, "input_id: " + intValues[i]);
+      }
+      for (int i = input_words.length; i < input_max_Size; ++i) {
+        intValues[i] = 2; //padding using <eos>
+      }
+    }
+    else {
+      Log.e(TAG, "input out of max Size allowed!");
+      return null;
     }
     Trace.endSection();
-
     // Copy the input data into TensorFlow.
     Trace.beginSection("fillNodeFloat");
     // TODO
-    inferenceInterface.fillNodeInt(inputName, new int[] {1, inputSize, 1, 1}, intValues);
+    inferenceInterface.fillNodeInt(inputName, new int[] {1, input_max_Size}, intValues);
     Log.e(TAG, "fillNodeInt success!");
     Trace.endSection();
 
@@ -153,12 +171,15 @@ public class TensorFlowWordPredictor implements Predictor {
         });
     for (int i = 0; i < outputs.length; ++i) {
       if (outputs[i] > THRESHOLD) {
-        pq.add(new Prediction("" + i, vocab.get(i), outputs[i]));
+        pq.add(new Prediction("" + i, id_to_word.get(i), outputs[i]));
       }
     }
     final ArrayList<Prediction> predictions = new ArrayList<Prediction>();
     for (int i = 0; i < Math.min(pq.size(), MAX_RESULTS); ++i) {
       predictions.add(pq.poll());
+    }
+    for (int i = 0; i < predictions.size(); ++i) {
+      Log.e(TAG, predictions.get(i).toString());
     }
     Trace.endSection(); // "predict word"
     return predictions;

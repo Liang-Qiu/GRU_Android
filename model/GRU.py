@@ -92,9 +92,31 @@ class Input(object):
     self.batch_size = batch_size = config.batch_size
     self.num_steps = num_steps = config.num_steps
     self.epoch_size = ((len(data) // batch_size) - 1) // num_steps
-    self.input_data, self.targets = reader.ptb_producer(
-        is_testing, data, batch_size, num_steps, name=name)
-    self.data_len = len(data);
+    if is_testing:
+      self.input_data = tf.placeholder(tf.int32, shape=(batch_size, num_steps), name="input")
+      self.targets = tf.zeros([batch_size, num_steps], dtype=tf.int32)
+#      self.data_len = tf.Variable(0);
+#      for i in range(num_steps):
+#	print("input_data[]:%d" %(self.input_data[0, i]))
+#        if self.input_data[0, i] == 9999:          #<eos>
+#	  break;
+#	else: 
+#	  self.data_len = tf.add(self.data_len, 1)
+#      print("data_len: %d" %(self.data_len))
+      print("set as placeholder")
+     
+    else:
+      self.input_data, self.targets = reader.ptb_producer(data, batch_size, num_steps, name=name)
+#      self.data_len = len(data);
+      print("read from pipeline")
+      
+@property
+def input_data(self):
+  return self.input_data
+#@property
+#def data_len(self):
+#  return self.data_len
+
 
 class Model(object):
   """The GRU model."""
@@ -103,11 +125,11 @@ class Model(object):
     self._config = config
     self._input = input_
     ########################## self._config/self._input ############################
-    input_data = input_.input_data
+    self._input_data = input_data = input_.input_data
     batch_size = input_.batch_size
     num_steps = input_.num_steps
     targets = input_.targets
-    data_len = input_.data_len
+#    data_len = input_.data_len
 
     hidden_size = config.hidden_size
     num_layers = config.num_layers
@@ -129,7 +151,7 @@ class Model(object):
     with tf.device("/cpu:0"):
       embedding = tf.get_variable(
           "embedding", [vocab_size, hidden_size], dtype=tf.float32)
-      inputs = tf.nn.embedding_lookup(embedding, input_data)
+      self._inputs = inputs = tf.nn.embedding_lookup(embedding, input_data)
 
     if is_training and keep_prob < 1:
       inputs = tf.nn.dropout(inputs, keep_prob)
@@ -137,22 +159,35 @@ class Model(object):
     outputs = []
     state = self._initial_state
     with tf.variable_scope("RNN"):
-      if not is_testing:
-        for time_step in range(num_steps):
-          if time_step > 0: tf.get_variable_scope().reuse_variables()
-	  (cell_output, state) = cell(inputs[:, time_step, :], state)
-	  outputs.append(cell_output)
-          self._final_state = state
-      else:
-        for time_step in range(data_len):
-          if time_step > 0: tf.get_variable_scope().reuse_variables()
-	  (cell_output, state) = cell(inputs[:, time_step, :], state)
-	  outputs.append(cell_output)
-          self._final_state = state
-        for time_step in range (data_len, num_steps):
-	  cell_output = tf.zeros([batch_size, hidden_size])
-	  outputs.append(cell_output)
-        
+
+  #  if not is_testing:
+      for time_step in range(num_steps):
+        if time_step > 0: tf.get_variable_scope().reuse_variables()
+        (cell_output, state) = cell(inputs[:, time_step, :], state)
+        outputs.append(cell_output)
+        self._final_state = state
+
+
+ #     else:
+  #      time_step1 = tf.constant(0)
+#	while_condition1 = lambda time_step1: tf.less(time_step1, data_len)
+#	def body1(time_step1):
+ #         if tf.greater(time_step1, 0): tf.get_variable_scope().reuse_variables()
+#	  (cell_output, state) = cell(inputs[:, time_step1, :], state)
+#	  outputs.append(cell_output)
+ #         self._final_state = state
+#	  return [tf.add(time_step1, 1)]
+#        r1 = tf.while_loop(while_condition1, body1, [time_step1])
+
+#	time_step2 = tf.constant(num_steps-1)
+#	while_condition2 = lambda time_step2: tf.greater_equal(time_step2, data_len)
+#	def body2(time_step2):
+#	  cell_output = tf.zeros([batch_size, hidden_size])
+#	  outputs.append(cell_output)  
+#	  return [tf.subtract(time_step2, 1)]
+ #       r2 = tf.while_loop(while_condition2, body2, [time_step2]) 
+  
+
 #      if is_testing:
 #        (outputs, self._final_state) = tf.nn.dynamic_rnn(cell, inputs, sequence_length=[data_len], initial_state=self._initial_state) 
 #      else:
@@ -162,14 +197,15 @@ class Model(object):
 #    self._final_state = state
     ############################### self._final_state ##############################
     output = tf.reshape(tf.concat(1, outputs), [-1, hidden_size])
+    self._output = output
     softmax_w = tf.get_variable(
         "softmax_w", [hidden_size, vocab_size], dtype=tf.float32)
     softmax_b = tf.get_variable("softmax_b", [vocab_size], dtype=tf.float32)
     self._logits = logits = tf.add(tf.matmul(output, softmax_w), softmax_b, name="logits")
     ############################### self._logits ###################################
     if is_testing:
-      self._result = tf.slice(logits, [data_len, 0], [1, vocab_size], name="result")
-      
+      self._result = tf.slice(logits, [num_steps - 1, 0], [1, vocab_size], name="result")
+      return
 
     loss = tf.nn.seq2seq.sequence_loss_by_example(
         [logits],
@@ -196,8 +232,21 @@ class Model(object):
     	tf.float32, shape=[], name="new_learning_rate")
     self._lr_update = tf.assign(self._lr, self._new_lr)
 
+
   def assign_lr(self, session, lr_value):
     session.run(self._lr_update, feed_dict={self._new_lr: lr_value})
+
+  @property
+  def input_data(self):
+    return self._input_data
+  
+  @property
+  def inputs(self):
+    return self._inputs
+
+  @property
+  def output(self):
+    return self._output
 
   @property
   def input(self):

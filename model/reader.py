@@ -84,7 +84,7 @@ def ptb_raw_data(data_path=None):
   return train_data, valid_data, test_data, vocabulary, id_to_word
 
 
-def ptb_producer(is_testing, raw_data, batch_size, num_steps, name=None):
+def ptb_producer(raw_data, batch_size, num_steps, name=None):
   """Iterate on the raw PTB data.
 
   This chunks up raw_data into batches of examples and returns Tensors that
@@ -103,7 +103,7 @@ def ptb_producer(is_testing, raw_data, batch_size, num_steps, name=None):
   Raises:
     tf.errors.InvalidArgumentError: if batch_size or num_steps are too high.
   """
-  with tf.name_scope(name, "PTBProducer", [is_testing, raw_data, batch_size, num_steps]):
+  with tf.name_scope(name, "PTBProducer", [raw_data, batch_size, num_steps]):
     raw_data = tf.convert_to_tensor(raw_data, name="raw_data", dtype=tf.int32)
 
     data_len = tf.size(raw_data)
@@ -112,19 +112,20 @@ def ptb_producer(is_testing, raw_data, batch_size, num_steps, name=None):
                       [batch_size, batch_len])
 
     epoch_size = (batch_len - 1) // num_steps
-    if not is_testing:
-      assertion = tf.assert_positive(
-          epoch_size,
-          message="epoch_size == 0, decrease batch_size or num_steps")
+#    if not is_testing:
+    assertion = tf.assert_positive(
+        epoch_size,
+        message="epoch_size == 0, decrease batch_size or num_steps")
       
-      with tf.control_dependencies([assertion]):
-        epoch_size = tf.identity(epoch_size, name="epoch_size")
+    with tf.control_dependencies([assertion]):
+      epoch_size = tf.identity(epoch_size, name="epoch_size")
 
-      i = tf.train.range_input_producer(epoch_size, shuffle=False).dequeue()
-      x = tf.slice(data, [0, i * num_steps], [batch_size, num_steps])
-      y = tf.slice(data, [0, i * num_steps + 1], [batch_size, num_steps])
-    else:
-      x = tf.concat(1,[data, tf.zeros([batch_size, num_steps - batch_len], dtype=tf.int32)])
-      y = tf.zeros([batch_size, num_steps], dtype=tf.int32)
+    i = tf.train.range_input_producer(epoch_size, shuffle=False).dequeue()
+    x = tf.slice(data, [0, i * num_steps], [batch_size, num_steps])
+    y = tf.slice(data, [0, i * num_steps + 1], [batch_size, num_steps])
+#    else:
+#      x = tf.reshape(data,[batch_size, num_steps])
+#      x = tf.concat(1,[data, tf.zeros([batch_size, num_steps - batch_len], dtype=tf.int32)])
+#      y = tf.zeros([batch_size, num_steps], dtype=tf.int32)
         	
     return x, y

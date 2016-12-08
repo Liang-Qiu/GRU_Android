@@ -51,9 +51,9 @@ public class PredictorActivity extends Activity {
 
     private TensorFlowWordPredictor predictor = new TensorFlowWordPredictor();
     private static final int NUM_CLASSES = 10000;
-    private static final int INPUT_SIZE = 5;
+    private static final int INPUT_MAX_SIZE = 20;
     //TODO not sure about the name
-    private static final String INPUT_NAME = "Test/TestInput/raw_data:0";
+    private static final String INPUT_NAME = "Test/input:0";
     private static final String OUTPUT_NAME = "Test/Model/result:0";
     private static final String MODEL_FILE = "file:///android_asset/gru_graph.pb";
     private static final String VOCAB_FILE = "file:///android_asset/gru_graph_vocab.txt";
@@ -82,7 +82,7 @@ public class PredictorActivity extends Activity {
         // tensorflow initialize
         try {
             //TODO Initialize parameters review
-            predictor.initializeTensorFlow(getAssets(), MODEL_FILE, VOCAB_FILE, NUM_CLASSES, INPUT_SIZE, INPUT_NAME, OUTPUT_NAME);
+            predictor.initializeTensorFlow(getAssets(), MODEL_FILE, VOCAB_FILE, NUM_CLASSES, INPUT_MAX_SIZE, INPUT_NAME, OUTPUT_NAME);
         } catch (final IOException e) {
             Log.e(TAG, "initializeTensorFlow IO Exception!");
         }
