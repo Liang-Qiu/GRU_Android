@@ -50,7 +50,7 @@ public class PredictorActivity extends Activity {
     private SpeechRecognizer sr;
 
     private TensorFlowWordPredictor predictor = new TensorFlowWordPredictor();
-    private static final int NUM_CLASSES = 10000;
+    private static final int NUM_CLASSES = 10006;
     private static final int INPUT_MAX_SIZE = 20;
     //TODO not sure about the name
     private static final String INPUT_NAME = "Test/input:0";

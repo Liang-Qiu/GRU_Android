@@ -34,7 +34,7 @@ flags.DEFINE_string(
     "model", "small",
     "A type of model. Possible options are: small, medium, large.")
 flags.DEFINE_string(
-    "data_path", "/home/liangqiu/Documents/simple-examples/data", 
+    "data_path", "/home/liangqiu/Documents/GRU_data", 
     "Where the training/test data is stored.")
 flags.DEFINE_string(
     "save_path", "/home/liangqiu/Documents/GRU_output", 
@@ -191,8 +191,8 @@ def main(_):
 	train_perplexity = run_training(session, mtrain)
         print("Epoch: %d Train Perplexity: %.3f" % (i + 1, train_perplexity))
         # valid
-	valid_perplexity = run_validation(session,mvalid)
-        print("Epoch: %d Valid Perplexity: %.3f" % (i + 1, valid_perplexity))
+	#valid_perplexity = run_validation(session,mvalid)
+        #print("Epoch: %d Valid Perplexity: %.3f" % (i + 1, valid_perplexity))
 
       run_test(session, mtest, id_to_word=id_to_word, test_data=test_data)
 #      print("Test Perplexity: %.3f" % test_perplexity)

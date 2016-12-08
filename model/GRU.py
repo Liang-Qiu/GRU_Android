@@ -37,7 +37,7 @@ class SmallConfig(object):
   keep_prob = 1.0
   lr_decay = 0.5
   batch_size = 20
-  vocab_size = 10000
+  vocab_size = 10006
 
 class MediumConfig(object):
   """Medium config."""
@@ -52,7 +52,7 @@ class MediumConfig(object):
   keep_prob = 0.5
   lr_decay = 0.8
   batch_size = 20
-  vocab_size = 10000
+  vocab_size = 10006
 
 class LargeConfig(object):
   """Large config."""
@@ -67,7 +67,7 @@ class LargeConfig(object):
   keep_prob = 0.35
   lr_decay = 1 / 1.15
   batch_size = 20
-  vocab_size = 10000
+  vocab_size = 10006
 
 class TestConfig(object):
   """Tiny config, for testing."""
@@ -204,7 +204,7 @@ class Model(object):
     self._logits = logits = tf.add(tf.matmul(output, softmax_w), softmax_b, name="logits")
     ############################### self._logits ###################################
     if is_testing:
-      self._result = tf.slice(logits, [num_steps - 1, 0], [1, vocab_size], name="result")
+      self._result = tf.nn.softmax(tf.slice(logits, [num_steps - 1, 0], [1, vocab_size]), name = "result")
       return
 
     loss = tf.nn.seq2seq.sequence_loss_by_example(

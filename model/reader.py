@@ -42,7 +42,7 @@ def _build_vocab(filename):
   
   vocab_file = open("gru_graph_vocab.txt","w")
   for i in range(len(words)):
-  	vocab_file.write(id_to_word[i] + "\n")
+  	vocab_file.write((id_to_word[i] + "\n").encode("utf-8"))
   vocab_file.close()
   	
   return word_to_id, id_to_word
@@ -72,9 +72,9 @@ def ptb_raw_data(data_path=None):
     where each of the data objects can be passed to PTBIterator.
   """
 
-  train_path = os.path.join(data_path, "ptb.train.txt")
-  valid_path = os.path.join(data_path, "ptb.valid.txt")
-  test_path = os.path.join(data_path, "ptb.test.txt")
+  train_path = os.path.join(data_path, "gru_train.txt")
+  valid_path = os.path.join(data_path, "gru_valid.txt")
+  test_path = os.path.join(data_path, "gru_test.txt")
 
   word_to_id, id_to_word = _build_vocab(train_path)
   train_data = _file_to_word_ids(train_path, word_to_id)

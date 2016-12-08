@@ -47,7 +47,7 @@ public class TensorFlowWordPredictor implements Predictor {
   private static final int MAX_RESULTS = 3;
 
   //TODO may change the THRESHOLD
-  private static final float THRESHOLD = 0.1f;
+  private static final float THRESHOLD = 0.01f;
 
   // Config values.
   private String inputName;
@@ -169,7 +169,7 @@ public class TensorFlowWordPredictor implements Predictor {
             return Float.compare(rhs.getConfidence(), lhs.getConfidence());
           }
         });
-    for (int i = 0; i < outputs.length; ++i) {
+    for (int i = 2; i < outputs.length; ++i) {  //don't show i = 0 <unk>; i = 1<eos>
       if (outputs[i] > THRESHOLD) {
         pq.add(new Prediction("" + i, id_to_word.get(i), outputs[i]));
       }
