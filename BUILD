@@ -55,7 +55,7 @@ cc_library(
 )
 
 android_binary(
-    name = "liangqiu_predictor",
+    name = "word_predictor",
     srcs = glob([
         "src/**/*.java",
     ]),

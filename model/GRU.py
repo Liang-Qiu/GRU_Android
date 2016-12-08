@@ -157,15 +157,15 @@ class Model(object):
       inputs = tf.nn.dropout(inputs, keep_prob)
 
     outputs = []
-    state = self._initial_state
+#    state = self._initial_state
     with tf.variable_scope("RNN"):
 
   #  if not is_testing:
-      for time_step in range(num_steps):
-        if time_step > 0: tf.get_variable_scope().reuse_variables()
-        (cell_output, state) = cell(inputs[:, time_step, :], state)
-        outputs.append(cell_output)
-        self._final_state = state
+#      for time_step in range(num_steps):
+#        if time_step > 0: tf.get_variable_scope().reuse_variables()
+#        (cell_output, state) = cell(inputs[:, time_step, :], state)
+#        outputs.append(cell_output)
+#        self._final_state = state
 
 
  #     else:
@@ -191,7 +191,7 @@ class Model(object):
 #      if is_testing:
 #        (outputs, self._final_state) = tf.nn.dynamic_rnn(cell, inputs, sequence_length=[data_len], initial_state=self._initial_state) 
 #      else:
-#        (outputs, self._final_state) = tf.nn.dynamic_rnn(cell, inputs, initial_state=self._initial_state) 
+      (outputs, self._final_state) = tf.nn.dynamic_rnn(cell, inputs, initial_state=self._initial_state) 
         
 
 #    self._final_state = state

@@ -65,7 +65,7 @@ public class PredictionScoreView extends View implements ResultsView {
 
     if (results != null) {
       for (final Prediction predic : results) {
-        canvas.drawText(predic.getTitle() + ": " + predic.getConfidence(), x, y, fgPaint);
+        canvas.drawText(predic.getTitle() + ": " + String.format("%.1f%% ", predic.getConfidence() * 100.0f), x, y, fgPaint);
         y += fgPaint.getTextSize() * 1.5f;
       }
     }
