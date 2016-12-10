@@ -53,11 +53,13 @@ public class TensorFlowWordPredictor implements Predictor {
   private String inputName;
   private String outputName;
   private int input_max_Size;
+  private String inputName2;
 
   // Pre-allocated buffers.
   private Vector<String> id_to_word = new Vector<String>();
   private HashMap<String, Integer> word_to_id = new HashMap<String, Integer>();
   private int[] intValues;   // a serial of word ids
+  private int[] data_len;
   private float[] outputs;   // confidence corresponding to vocab
   private String[] outputNames; // names of output nodes
 
@@ -83,9 +85,11 @@ public class TensorFlowWordPredictor implements Predictor {
       int numClasses,
       int input_max_Size,
       String inputName,
+      String inputName2,
       String outputName) throws IOException {
     this.inputName = inputName;
     this.outputName = outputName;
+    this.inputName2 = inputName2;
 
     // Read the label names into memory.
     // TODO(andrewharp): make this handle non-assets.
@@ -109,6 +113,7 @@ public class TensorFlowWordPredictor implements Predictor {
     outputNames = new String[] {outputName};
     intValues = new int[input_max_Size];
     outputs = new float[numClasses];
+    data_len = new int[1];
 
     inferenceInterface = new TensorFlowInferenceInterface();
 
@@ -121,19 +126,23 @@ public class TensorFlowWordPredictor implements Predictor {
     Trace.beginSection("predictWord");
 
     Trace.beginSection("preprocessText");
-    Log.e(TAG, "inut_string:" + string);
-    //TODO 将string转化为int[numsteps] !!!!!!
+    Log.e(TAG, "inut_string: " + string);
+    //TODO
+
     String[] input_words = string.split(" ");
+    data_len[0] =  input_words.length;
+    Log.e(TAG, "data_len: " + data_len[0]);
     //intValues = new int[input_words.length];
     if (input_words.length < input_max_Size) {
       for (int i = 0; i < input_words.length; ++i) {
         Log.e(TAG, "input_word: " + input_words[i]);
         if (word_to_id.containsKey(input_words[i])) intValues[i] = word_to_id.get(input_words[i]);
-        else intValues[i] = 1; //rare words, <unk> in the vocab
+        else intValues[i] = 6; //rare words, <unk> in the vocab
         Log.e(TAG, "input_id: " + intValues[i]);
       }
       for (int i = input_words.length; i < input_max_Size; ++i) {
-        intValues[i] = 2; //padding using <eos>
+        intValues[i] = 0; //padding using <eos>
+        Log.e(TAG, "input_id: " + intValues[i]);
       }
     }
     else {
@@ -146,6 +155,8 @@ public class TensorFlowWordPredictor implements Predictor {
     // TODO
     inferenceInterface.fillNodeInt(inputName, new int[] {1, input_max_Size}, intValues);
     Log.e(TAG, "fillNodeInt success!");
+    inferenceInterface.fillNodeInt(inputName2, new int[] {1}, data_len);
+    Log.e(TAG, "fillDATA_LEN success!");
     Trace.endSection();
 
     // Run the inference call.
@@ -169,7 +180,7 @@ public class TensorFlowWordPredictor implements Predictor {
             return Float.compare(rhs.getConfidence(), lhs.getConfidence());
           }
         });
-    for (int i = 2; i < outputs.length; ++i) {  //don't show i = 0 <unk>; i = 1<eos>
+    for (int i = 0; i < outputs.length; ++i) {  //don't show i = 0 <unk>; i = 1<eos>
       if (outputs[i] > THRESHOLD) {
         pq.add(new Prediction("" + i, id_to_word.get(i), outputs[i]));
       }

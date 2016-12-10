@@ -31,6 +31,7 @@ import android.view.View;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.util.Log;
+import android.os.Handler;
 
 
 import java.util.List;
@@ -44,19 +45,25 @@ public class PredictorActivity extends Activity {
     private static final String PERMISSION_STORAGE = Manifest.permission.WRITE_EXTERNAL_STORAGE;
     private static final String TAG = "PredictorActvity";
 
-    private TextView txtSpeechInput;
+    private TextView prompt_input;
     private ResultsView resultsView;
-    private ImageButton btnSpeak;
+    private ImageButton btnSwitch;
+    //private ImageButton btnEnd;
+    private ImageButton btnRefresh;
     private SpeechRecognizer sr;
+    private boolean isStarted = false;
+    private String main_str = new String(); // for predict
 
     private TensorFlowWordPredictor predictor = new TensorFlowWordPredictor();
-    private static final int NUM_CLASSES = 10006;
-    private static final int INPUT_MAX_SIZE = 20;
+    private static final int NUM_CLASSES = 10000;
+    private static final int INPUT_MAX_SIZE = 20; // at most 19 words
     //TODO not sure about the name
     private static final String INPUT_NAME = "Test/input:0";
     private static final String OUTPUT_NAME = "Test/Model/result:0";
+    private static final String INPUT_NAME2 = "Test/length:0";
     private static final String MODEL_FILE = "file:///android_asset/gru_graph.pb";
     private static final String VOCAB_FILE = "file:///android_asset/gru_graph_vocab.txt";
+    private final Handler handler = new Handler();
 
 
     @Override
@@ -64,9 +71,11 @@ public class PredictorActivity extends Activity {
         super.onCreate(savedInstanceState);
         Log.e(TAG,  "On Create!");
         setContentView(R.layout.main);
-        txtSpeechInput = (TextView) findViewById(R.id.txtSpeechInput);
+        prompt_input = (TextView) findViewById(R.id.prompt_input);
         resultsView = (ResultsView) findViewById(R.id.results);
-        btnSpeak = (ImageButton) findViewById(R.id.btnSpeak);
+        btnSwitch = (ImageButton) findViewById(R.id.btnSwitch);
+        //btnEnd = (ImageButton) findViewById(R.id.btnEnd);
+        btnRefresh = (ImageButton) findViewById(R.id.btnRefresh);
 
         if (hasPermission()) {
             if (null == savedInstanceState) {
@@ -82,20 +91,38 @@ public class PredictorActivity extends Activity {
         // tensorflow initialize
         try {
             //TODO Initialize parameters review
-            predictor.initializeTensorFlow(getAssets(), MODEL_FILE, VOCAB_FILE, NUM_CLASSES, INPUT_MAX_SIZE, INPUT_NAME, OUTPUT_NAME);
+            predictor.initializeTensorFlow(getAssets(), MODEL_FILE, VOCAB_FILE, NUM_CLASSES, INPUT_MAX_SIZE, INPUT_NAME, INPUT_NAME2, OUTPUT_NAME);
         } catch (final IOException e) {
             Log.e(TAG, "initializeTensorFlow IO Exception!");
         }
         // voice recognition initialize
         sr = SpeechRecognizer.createSpeechRecognizer(this);
         sr.setRecognitionListener(new listener());
-        btnSpeak.setOnClickListener(new View.OnClickListener() {
+        btnSwitch.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 promptSpeechInput();
+                isStarted = !isStarted;
+                if(isStarted) btnSwitch.setImageResource(R.drawable.ico_start);
+                else btnSwitch.setImageResource(R.drawable.ico_end);
+            }
+        });
+        /* btnEnd.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(isStarted) isStarted = false;
+            }
+        }); */
+        btnRefresh.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                main_str = "";
+                prompt_input.setText(main_str);
+                resultsView.setResults(null);
             }
         });
     }
+
 
     private class listener implements RecognitionListener
     {
@@ -122,18 +149,37 @@ public class PredictorActivity extends Activity {
         public void onError(int error)
         {
             Log.e(TAG,  "error: " +  error);
-            txtSpeechInput.setText("error: " + error);
+            //prompt_input.setText("Please say that again.");
+
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    if(isStarted) promptSpeechInput();
+                }
+            }, 500);
         }
-        public void onResults(Bundle results)
-        {
-            String str = new String();
-            ArrayList<String> data = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-            str = data.get(0);
-            Log.e(TAG, "onResults: " + str);
-            txtSpeechInput.setText(str); // The first recognition result
-            //TODO
-            final List<Predictor.Prediction> predictedWords = predictor.predictWord(str);
-            resultsView.setResults(predictedWords);
+        public void onResults(Bundle results) {
+            if (isStarted) {
+                String tmp_str = new String();
+                ArrayList<String> data = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                tmp_str = data.get(0);
+                Log.e(TAG, "onResults: " + tmp_str);
+
+                if ((tmp_str.split(" ").length + main_str.split(" ").length) < INPUT_MAX_SIZE) {
+                    main_str = main_str + tmp_str + " ";
+                    prompt_input.setText(main_str); // The first recognition result
+                } else {
+                    main_str = tmp_str + " ";
+                    prompt_input.setText("Refresh automatically... \n" + main_str);
+                }
+
+                //TODO
+                final List<Predictor.Prediction> predictedWords = predictor.predictWord(main_str);
+                resultsView.setResults(predictedWords);
+
+                promptSpeechInput();
+
+            }
         }
         public void onPartialResults(Bundle partialResults)
         {
@@ -150,7 +196,7 @@ public class PredictorActivity extends Activity {
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS,5);
         sr.startListening(intent);
-        //TODO not sure
+        //prompt_input.setText("I'm listening...");
         Log.i(TAG, "listening ...");
     }
 
