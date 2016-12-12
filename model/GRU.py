@@ -37,7 +37,7 @@ class SmallConfig(object):
   keep_prob = 1.0
   lr_decay = 0.5
   batch_size = 20
-  vocab_size = 10006
+  vocab_size = 10000
 
 class MediumConfig(object):
   """Medium config."""
@@ -45,14 +45,14 @@ class MediumConfig(object):
   learning_rate = 1.0
   max_grad_norm = 5
   num_layers = 2
-  num_steps = 35
+  num_steps = 20
   hidden_size = 650
   max_epoch = 6
   max_max_epoch = 39
   keep_prob = 0.5
   lr_decay = 0.8
   batch_size = 20
-  vocab_size = 10006
+  vocab_size = 10000
 
 class LargeConfig(object):
   """Large config."""
@@ -67,7 +67,7 @@ class LargeConfig(object):
   keep_prob = 0.35
   lr_decay = 1 / 1.15
   batch_size = 20
-  vocab_size = 10006
+  vocab_size = 10000
 
 class TestConfig(object):
   """Tiny config, for testing."""
@@ -92,10 +92,11 @@ class Input(object):
     self.batch_size = batch_size = config.batch_size
     self.num_steps = num_steps = config.num_steps
     self.epoch_size = ((len(data) // batch_size) - 1) // num_steps
+
     if is_testing:
       self.input_data = tf.placeholder(tf.int32, shape=(batch_size, num_steps), name="input")
       self.targets = tf.zeros([batch_size, num_steps], dtype=tf.int32)
-#      self.data_len = tf.Variable(0);
+      self.data_len = tf.placeholder(tf.int32,shape=1, name="length");
 #      for i in range(num_steps):
 #	print("input_data[]:%d" %(self.input_data[0, i]))
 #        if self.input_data[0, i] == 9999:          #<eos>
@@ -107,15 +108,15 @@ class Input(object):
      
     else:
       self.input_data, self.targets = reader.ptb_producer(data, batch_size, num_steps, name=name)
-#      self.data_len = len(data);
+      self.data_len = [num_steps]
       print("read from pipeline")
       
 @property
 def input_data(self):
   return self.input_data
-#@property
-#def data_len(self):
-#  return self.data_len
+@property
+def data_len(self):
+  return self.data_len
 
 
 class Model(object):
@@ -129,7 +130,7 @@ class Model(object):
     batch_size = input_.batch_size
     num_steps = input_.num_steps
     targets = input_.targets
-#    data_len = input_.data_len
+    data_len = input_.data_len
 
     hidden_size = config.hidden_size
     num_layers = config.num_layers
@@ -187,11 +188,11 @@ class Model(object):
 #	  return [tf.subtract(time_step2, 1)]
  #       r2 = tf.while_loop(while_condition2, body2, [time_step2]) 
   
-
+      length = data_len * batch_size
 #      if is_testing:
-#        (outputs, self._final_state) = tf.nn.dynamic_rnn(cell, inputs, sequence_length=[data_len], initial_state=self._initial_state) 
+      (outputs, self._final_state) = tf.nn.dynamic_rnn(cell, inputs, sequence_length=length, initial_state=self._initial_state) 
 #      else:
-      (outputs, self._final_state) = tf.nn.dynamic_rnn(cell, inputs, initial_state=self._initial_state) 
+#        (outputs, self._final_state) = tf.nn.dynamic_rnn(cell, inputs, initial_state=self._initial_state) 
         
 
 #    self._final_state = state
@@ -204,7 +205,7 @@ class Model(object):
     self._logits = logits = tf.add(tf.matmul(output, softmax_w), softmax_b, name="logits")
     ############################### self._logits ###################################
     if is_testing:
-      self._result = tf.nn.softmax(tf.slice(logits, [num_steps - 1, 0], [1, vocab_size]), name = "result")
+      self._result = tf.nn.softmax(tf.slice(logits, [data_len[0] - 1, 0], [1, vocab_size]), name = "result")
       return
 
     loss = tf.nn.seq2seq.sequence_loss_by_example(

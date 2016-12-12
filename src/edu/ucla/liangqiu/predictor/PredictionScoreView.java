@@ -46,7 +46,7 @@ public class PredictionScoreView extends View implements ResultsView {
     fgPaint.setTextSize(textSizePx);
 
     bgPaint = new Paint();
-    bgPaint.setColor(0xff6b394c);
+    bgPaint.setColor(0xffeeeeee);
   }
 
   @Override

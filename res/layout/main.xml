@@ -14,7 +14,7 @@
         android:id="@+id/RelativeLayout"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:layout_above="@+id/btnSpeak">
+        android:layout_above="@+id/LinearLayout">
 
         <edu.ucla.liangqiu.predictor.PredictionScoreView
             android:id="@+id/results"
@@ -22,44 +22,61 @@
             android:layout_height="112dp"
             android:layout_alignParentTop="true" />
         <TextView
-            android:id="@+id/txtSpeechInput"
+            android:id="@+id/prompt_input"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="200dp"
             android:layout_alignParentBottom="true"
             android:layout_centerHorizontal="true"
-            android:textColor="@color/white"
+            android:textColor="@color/black"
             android:textSize="26dp"
             android:textStyle="normal" />
     </RelativeLayout>
 
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="31dp"
-        android:gravity="center"
-        android:orientation="vertical"
-        android:id="@+id/linearLayout"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true">
-
-        <TextView
+    <!--    <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:text="@string/tap_on_mic"
-            android:textColor="@color/white"
-            android:textSize="15dp"
-            android:textStyle="normal" />
-    </LinearLayout>
+            android:layout_marginBottom="31dp"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:id="@+id/linearLayout"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true">
 
-    <ImageButton
-        android:id="@+id/btnSpeak"
-        android:layout_width="wrap_content"
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="@string/tap_on_mic"
+                android:textColor="@color/white"
+                android:textSize="15dp"
+                android:textStyle="normal" />
+        </LinearLayout>
+    -->
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@null"
-        android:src="@drawable/ico_mic"
-        android:layout_above="@+id/linearLayout"
-        android:layout_centerHorizontal="true" />
+        android:layout_alignParentBottom = "true"
+        android:orientation="horizontal"
+        android:id="@+id/LinearLayout">
 
+        <ImageButton
+            android:id="@+id/btnRefresh"
+            android:layout_width="156dp"
+            android:layout_height="140dp"
+            android:background="@null"
+            android:src="@drawable/ico_refresh"
+            android:layout_weight="1"
+            />
+
+        <ImageButton
+            android:id="@+id/btnSwitch"
+            android:layout_width="156dp"
+            android:layout_height="140dp"
+            android:background="@null"
+            android:src="@drawable/ico_end"
+            android:layout_weight="1"
+            />
+
+    </LinearLayout>
 </RelativeLayout>

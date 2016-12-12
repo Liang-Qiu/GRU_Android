@@ -113,23 +113,36 @@ def run_test(session, model, id_to_word=None, test_data=None):
       "result": model.result,
 #      "cost": model.cost
   }
-  test_feed = np.array([[1,3,3,4,5,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]], dtype=np.int32)		
-  print(test_feed.shape[0])
-  print(test_feed.shape[1])
-  print(test_feed.dtype)
-  test_dict = {
-      model.input.input_data: test_feed
-  }   
+
+  test_feed1 = np.array([[1,3,3,4,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]], dtype=np.int32)	
+  test_feed2 = np.array([[31,32,33,34,35,36,37,38,39,40,0,0,0,0,0,0,0,0,0,0]], dtype=np.int32)
+  len_feed1 = np.array([5], dtype=np.int32)
+  len_feed2 = np.array([10], dtype=np.int32)
+#  print(test_feed1.shape[0])
+#  print(test_feed1.shape[1])
+#  print(test_feed1.dtype)
+  test_dict1 = {
+      model.input.input_data: test_feed1,
+      model.input.data_len: len_feed1
+  }  
+  test_dict2 = {
+      model.input.input_data: test_feed2,
+      model.input.data_len: len_feed2
+  }
+
 #  for step in range(model.input.epoch_size):
   print("input_data")
-  print(session.run(model.input.input_data, feed_dict = test_dict))
+  print(session.run(model.input.input_data, feed_dict = test_dict1))
+  print(session.run(model.input.input_data, feed_dict = test_dict2))
 #  print("data_len")
 #  print(session.run(model.input.data_len, feed_dict = test_dict))
   print("inputs")
-  print(session.run(model.inputs, feed_dict = test_dict))
+  print(session.run(model.inputs, feed_dict = test_dict1))
+  print(session.run(model.inputs, feed_dict = test_dict2))
   print("output")
-  print(session.run(model.output, feed_dict = test_dict))
-  vals = session.run(fetches, feed_dict=test_dict)
+  print(session.run(model.output, feed_dict = test_dict1))
+  print(session.run(model.output, feed_dict = test_dict2))
+  vals = session.run(fetches, feed_dict=test_dict1)
 #  cost = vals["cost"]
   result = vals["result"]
 
@@ -138,6 +151,12 @@ def run_test(session, model, id_to_word=None, test_data=None):
 	      
 #  print("data_length: %s perplexity: %.3f speed: %.0f wps" % (len(test_data), np.exp(costs / iters), iters * model.input.batch_size / (time.time() - start_time)))
   
+  print("%.8f" %(result[0, np.argmax(result)]))
+  print(result)
+  print("predicted word: %s" % (id_to_word[np.argmax(result)]))		   
+
+  vals = session.run(fetches, feed_dict=test_dict2)
+  result = vals["result"]		   
   print("%.8f" %(result[0, np.argmax(result)]))
   print(result)
   print("predicted word: %s" % (id_to_word[np.argmax(result)]))		   
