@@ -17,5 +17,5 @@
 
 <resources>
     <string name="app_name">Word Predictor</string>
-    <string name="activity_name_classification">Word Predictor</string>
+    <string name="activity_name_classification">Smart Predictor</string>
 </resources>
