@@ -1,6 +1,6 @@
-# TensorFlow Android GRU Word Predictor 
+# TensorFlow Android GRU Smart Prompter 
 
-This folder contains a simple voice-based word predictor demo application utilizing TensorFlow.
+This folder contains a voice-based word predictor application utilizing TensorFlow.
 
 ## Description
 
@@ -10,8 +10,9 @@ displaying the top results in an overlay on the main activity.
 
 ## To build/install/run
 
-As a prerequisite, Bazel, the Android NDK, and the Android SDK must all be
-installed on your system.
+As a prerequisite, Bazel, the Android NDK, and the Android SDK, TensorFlow must all be 
+installed on your system. And Google voice recognition service need to be installed on 
+your smart phone.
 
 1. Get the recommended Bazel version listed at:
         https://www.tensorflow.org/versions/master/get_started/os_setup.html#source
@@ -19,13 +20,26 @@ installed on your system.
         http://developer.android.com/tools/sdk/ndk/index.html
 3. The Android SDK and build tools may be obtained from:
         https://developer.android.com/tools/revisions/build-tools.html
+4. The TensorFlow package can be found from:
+	http://www.tensorflow.org
+5. Download any Google App with Google voice typing automatically install recognition 
+service.
 
-Paste this directory under tensorflow/tensorflow/examples/.
+Then paste this directory under tensorflow/tensorflow/examples/.
 The Android entries in [`<workspace_root>/WORKSPACE`](../../../WORKSPACE#L2-L13) must be
 uncommented with the paths filled in appropriately depending on where you
 installed the NDK and SDK. Otherwise an error such as:
 "The external label '//external:android/sdk' is not bound to anything" will
 be reported.
+
+In directory tensorflow/tensorflow/core/kernels, modify control_flow_op.cc:
+comment the three lines: 
+"TF_CALL_ALL_TYPES(REGISTER_CPU_SWITCH)"
+"TF_CALL_ALL_TYPES(REGISTER_CPU_REF_SWITCH)"
+"TF_CALL_QUANTIZED_TYPES(REGISTER_CPU_SWITCH)"
+and add two lines above it:
+"REGISTER_KERNEL_BUILDER(Name("Switch").Device(DEVICE_CPU), SwitchOp)"
+"REGISTER_KERNEL_BUILDER(Name("RefSwitch".Device(DEVICE_CPU), SwitchOp))"
 
 The model protobuf file and the vocab file are both already included in the `assets` directory 
 in the source tree. And the model definition file (GRU.py and run GRU.py) using tensorflow python API 
@@ -70,5 +84,5 @@ to do is try installing with adb.
 
 To use the Google voice recognition service, you need to connect your phone to
 the Internet running this app.
-Once the app is installed it will be named "Word Predictor" and have the orange
+Once the app is installed it will be named "Smart Prompter" and have the orange
 TensorFlow logo as its icon.
